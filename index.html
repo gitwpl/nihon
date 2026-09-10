@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Transter · 单词与助记句</title>
+  <title>自建地下铁 · 单词与助记句</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Shippori+Mincho:wght@500;700&display=swap" rel="stylesheet" />
@@ -90,11 +90,22 @@
 
     #content h1 { display: none; }
 
+    #content a {
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+    }
+
+    #content a:hover {
+      border-bottom-color: var(--accent);
+    }
+
     #content h2 {
       margin: 1.6rem 0 0.75rem;
       font-family: "Shippori Mincho", serif;
       font-size: 1.25rem;
       color: var(--accent);
+      scroll-margin-top: 1rem;
     }
 
     #content h2:first-child { margin-top: 0.2rem; }
@@ -167,7 +178,7 @@
 <body>
   <div class="wrap">
     <header>
-      <h1>Transter</h1>
+      <h1>自建地下铁</h1>
       <p>单词与助记句 · 内容来自 README.md</p>
     </header>
 
@@ -210,6 +221,14 @@
         if (!res.ok) throw new Error("无法读取 README.md");
         const md = await res.text();
         content.innerHTML = marked.parse(md);
+        content.querySelectorAll("h2, h3").forEach((h) => {
+          const id = h.textContent
+            .trim()
+            .toLowerCase()
+            .replace(/[（）()【】\[\]「」『』、，。！？\s]+/g, "")
+            .replace(/[^\w\u4e00-\u9fff-]/g, "");
+          if (id) h.id = id;
+        });
         hideEmptyRows(content);
         status.textContent = "";
       } catch (err) {
