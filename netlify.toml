@@ -1,0 +1,9 @@
+[build]
+  publish = "."
+  # 纯静态站点，无需构建命令
+
+[[headers]]
+  for = "/*.md"
+  [headers.values]
+    Content-Type = "text/markdown; charset=utf-8"
+    Cache-Control = "public, max-age=0, must-revalidate"

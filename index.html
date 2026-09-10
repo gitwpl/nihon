@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Transter · 单词与助记句</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Shippori+Mincho:wght@500;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    :root {
+      --bg: #f3efe6;
+      --ink: #1c1915;
+      --muted: #6b645a;
+      --line: #d9d0c2;
+      --accent: #2f5d50;
+      --card: rgba(255, 252, 246, 0.88);
+      --shadow: 0 18px 40px rgba(40, 32, 20, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: "Noto Sans SC", sans-serif;
+      background:
+        radial-gradient(ellipse 80% 50% at 10% -10%, #e7f0ea 0%, transparent 55%),
+        radial-gradient(ellipse 70% 45% at 100% 0%, #efe6d4 0%, transparent 50%),
+        linear-gradient(180deg, #f7f3eb 0%, var(--bg) 40%, #ebe4d8 100%);
+    }
+
+    .wrap {
+      width: min(960px, calc(100% - 2rem));
+      margin: 0 auto;
+      padding: 2.5rem 0 4rem;
+    }
+
+    header {
+      margin-bottom: 1.75rem;
+    }
+
+    header h1 {
+      margin: 0 0 0.4rem;
+      font-family: "Shippori Mincho", "Noto Sans SC", serif;
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin: 1.25rem 0 1.5rem;
+    }
+
+    .toolbar input {
+      flex: 1 1 220px;
+      border: 1px solid var(--line);
+      background: var(--card);
+      border-radius: 10px;
+      padding: 0.7rem 0.9rem;
+      font: inherit;
+      color: var(--ink);
+      outline: none;
+      box-shadow: var(--shadow);
+    }
+
+    .toolbar input:focus {
+      border-color: var(--accent);
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 1.25rem 1.35rem 1.6rem;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(6px);
+    }
+
+    #content h1 { display: none; }
+
+    #content h2 {
+      margin: 1.6rem 0 0.75rem;
+      font-family: "Shippori Mincho", serif;
+      font-size: 1.25rem;
+      color: var(--accent);
+    }
+
+    #content h2:first-child { margin-top: 0.2rem; }
+
+    #content p, #content li {
+      line-height: 1.7;
+      color: #3a342c;
+    }
+
+    #content ol { padding-left: 1.2rem; }
+
+    #content hr {
+      border: 0;
+      border-top: 1px solid var(--line);
+      margin: 1.4rem 0;
+    }
+
+    #content table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+      display: block;
+      overflow-x: auto;
+    }
+
+    #content th, #content td {
+      border-bottom: 1px solid var(--line);
+      padding: 0.65rem 0.55rem;
+      text-align: left;
+      vertical-align: top;
+      white-space: nowrap;
+    }
+
+    #content th {
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 0.82rem;
+    }
+
+    #content td:nth-child(1),
+    #content td:nth-child(4) {
+      font-family: "Shippori Mincho", serif;
+      white-space: normal;
+      min-width: 8rem;
+    }
+
+    #content td:nth-child(3),
+    #content td:nth-child(5) {
+      white-space: normal;
+      min-width: 7rem;
+    }
+
+    .empty-row { display: none !important; }
+
+    .status {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-top: 1rem;
+    }
+
+    .status.error { color: #9a3b2f; }
+
+    footer {
+      margin-top: 1.25rem;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Transter</h1>
+      <p>单词与助记句 · 内容来自 README.md</p>
+    </header>
+
+    <div class="toolbar">
+      <input id="q" type="search" placeholder="搜索单词、释义、句子…" autocomplete="off" />
+    </div>
+
+    <div class="panel">
+      <div id="content">加载中…</div>
+      <p id="status" class="status"></p>
+    </div>
+
+    <footer>部署后继续编辑 README.md 并重新发布即可更新。</footer>
+  </div>
+
+  <script>
+    const content = document.getElementById("content");
+    const status = document.getElementById("status");
+    const q = document.getElementById("q");
+
+    function hideEmptyRows(root) {
+      root.querySelectorAll("tr").forEach((tr) => {
+        const text = tr.textContent.replace(/[|\-\s]/g, "");
+        if (!text) tr.classList.add("empty-row");
+      });
+    }
+
+    function filterTables(keyword) {
+      const key = keyword.trim().toLowerCase();
+      content.querySelectorAll("tbody tr").forEach((tr) => {
+        if (tr.classList.contains("empty-row")) return;
+        const hit = !key || tr.textContent.toLowerCase().includes(key);
+        tr.style.display = hit ? "" : "none";
+      });
+    }
+
+    async function load() {
+      try {
+        const res = await fetch("README.md", { cache: "no-store" });
+        if (!res.ok) throw new Error("无法读取 README.md");
+        const md = await res.text();
+        content.innerHTML = marked.parse(md);
+        hideEmptyRows(content);
+        status.textContent = "";
+      } catch (err) {
+        content.innerHTML = "";
+        status.classList.add("error");
+        status.textContent = "加载失败。本地请用本地服务器打开，或部署到 Netlify 后再访问。";
+        console.error(err);
+      }
+    }
+
+    q.addEventListener("input", () => filterTables(q.value));
+    load();
+  </script>
+</body>
+</html>
